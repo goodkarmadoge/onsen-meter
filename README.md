@@ -84,6 +84,12 @@ Public widget ──poll every 45s──▶ /api/public/status                 a
 - **Next.js 14** (App Router) on Vercel, **Supabase Postgres** for storage.
 - Every table has **RLS enabled with zero policies**. Nothing reaches the
   database except this app's own route handlers, using the service-role key.
+- The one exception is `public_status`, which is `SECURITY DEFINER`: the public
+  read is specified as unauthenticated (§8.1), so the *function* is the security
+  boundary rather than the caller's key. It returns only the sanitised public
+  payload. This means the guest-facing widget keeps working even if the
+  service-role key is wrong, missing, or mid-rotation — only the staff console
+  depends on it. Every mutating function has `EXECUTE` revoked from `anon`.
 - All occupancy arithmetic lives in Postgres functions that take a row lock, so
   two staff tapping at once produce two increments rather than one lost update
   (PRD §6.3).
