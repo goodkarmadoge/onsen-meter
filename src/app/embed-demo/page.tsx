@@ -1,4 +1,5 @@
 import { headers } from 'next/headers'
+import { ScriptEmbedDemo } from '@/components/ScriptEmbedDemo'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,9 +47,7 @@ export default function EmbedDemo() {
         </h2>
         <Snippet code={scriptSnippet} />
         <div className="mt-4 rounded-2xl bg-[var(--cream-sunk)] p-5">
-          <div id="yunomori-crowd-meter" />
-          {/* eslint-disable-next-line @next/next/no-sync-scripts */}
-          <script src="/embed.js" async />
+          <ScriptEmbedDemo />
         </div>
       </section>
 
