@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { env } from '@/lib/env'
+import { logFailure } from '@/lib/status'
 import type { PublicStatus } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
@@ -31,6 +32,8 @@ export async function GET() {
     if (error || !data) {
       // §7.2 "Unavailable": fail gracefully, and never let a stale number be
       // presented as live. The widget renders a neutral message from this.
+      // The cause goes to the server log so an outage is diagnosable.
+      logFailure('GET /api/public/status', error?.message ?? 'no row returned')
       return NextResponse.json(
         { state: 'unavailable' },
         { status: 200, headers: { ...headers, 'Cache-Control': 'no-store' } },
@@ -38,7 +41,8 @@ export async function GET() {
     }
 
     return NextResponse.json(data as PublicStatus, { headers })
-  } catch {
+  } catch (caught) {
+    logFailure('GET /api/public/status', caught)
     return NextResponse.json(
       { state: 'unavailable' },
       { status: 200, headers: { ...headers, 'Cache-Control': 'no-store' } },
