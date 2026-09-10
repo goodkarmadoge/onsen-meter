@@ -4,9 +4,48 @@ import { env } from './env'
 
 let client: SupabaseClient | null = null
 
+/**
+ * Every table has RLS enabled with zero policies, so an anon or publishable
+ * key can reach the RPCs but silently reads nothing inside them — the
+ * functions return null and the widget shows "Unavailable" with no error
+ * anywhere. That is a genuinely confusing failure, and easy to hit: Supabase's
+ * API page shows the publishable key prominently and hides service_role behind
+ * a reveal. So check the key's role up front and say so plainly.
+ */
+function assertServiceRoleKey(key: string): void {
+  let role: string | null = null
+
+  if (key.startsWith('sb_publishable_')) {
+    role = 'publishable'
+  } else if (key.startsWith('sb_secret_')) {
+    return // new-style secret key: correct
+  } else {
+    const payload = key.split('.')[1]
+    if (payload) {
+      try {
+        role = JSON.parse(Buffer.from(payload, 'base64url').toString()).role
+      } catch {
+        // Not a JWT we can read; let the request itself fail rather than guess.
+        return
+      }
+    }
+  }
+
+  if (role && role !== 'service_role') {
+    console.error(
+      `[crowd-meter] SUPABASE_SERVICE_ROLE_KEY holds a "${role}" key, not the ` +
+        `service_role key. Row-level security will block every read, so the ` +
+        `widget will show "Unavailable" even though the database is healthy. ` +
+        `Copy the service_role key from Supabase → Project Settings → API.`,
+    )
+  }
+}
+
 export function db(): SupabaseClient {
   if (!client) {
-    client = createClient(env.supabaseUrl(), env.supabaseServiceKey(), {
+    const key = env.supabaseServiceKey()
+    assertServiceRoleKey(key)
+    client = createClient(env.supabaseUrl(), key, {
       auth: { persistSession: false, autoRefreshToken: false },
     })
   }
