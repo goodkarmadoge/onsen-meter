@@ -11,6 +11,12 @@ flags in §12.
 
 ---
 
+**Live:** https://onsen-meter.vercel.app
+
+> Until the environment variables below are set, every surface correctly shows
+> its degraded state rather than an error — which is itself the §7.2
+> "Unavailable" requirement working.
+
 ## Surfaces
 
 | Route | Who | What |
@@ -106,6 +112,9 @@ Copy `.env.example` and fill in:
 | `SUPABASE_SERVICE_ROLE_KEY` | Same page. Server-side only — never `NEXT_PUBLIC_` |
 | `SESSION_SECRET` | `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"` |
 | `LOCATION_SLUG` | `singapore` |
+
+On Vercel these go in **Project → Settings → Environment Variables**, applied to
+Production, Preview and Development, then redeploy.
 
 `SESSION_SECRET` signs session cookies **and** peppers the PIN lookup index.
 Changing it invalidates every session and every existing PIN, so treat it as
