@@ -128,9 +128,21 @@ permanent.
 
 ### 3. Staff PINs
 
+PowerShell:
+
+```powershell
+node scripts/make-staff.mjs "Aiko Tan" manager 481902 --secret <SESSION_SECRET>
+```
+
+bash / zsh:
+
 ```bash
 SESSION_SECRET=<same value> node scripts/make-staff.mjs "Aiko Tan" manager 481902
 ```
+
+The secret is also picked up from `.env.local` if present. It must match the
+deployment's `SESSION_SECRET` — it peppers the PIN lookup index, so a mismatch
+produces a PIN that silently never authenticates.
 
 Prints SQL to paste into the Supabase SQL editor. The PIN itself never appears
 in the output, in a migration, or in this repository — keep a record of it
