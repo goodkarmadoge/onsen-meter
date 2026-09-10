@@ -33,7 +33,11 @@ export async function GET() {
       // §7.2 "Unavailable": fail gracefully, and never let a stale number be
       // presented as live. The widget renders a neutral message from this.
       // The cause goes to the server log so an outage is diagnosable.
-      logFailure('GET /api/public/status', error?.message ?? 'no row returned')
+      logFailure(
+        'GET /api/public/status',
+        error?.message ??
+          `no location matched slug "${env.locationSlug()}" — check LOCATION_SLUG against locations.slug`,
+      )
       return NextResponse.json(
         { state: 'unavailable' },
         { status: 200, headers: { ...headers, 'Cache-Control': 'no-store' } },
