@@ -33,11 +33,28 @@ export async function GET() {
       // §7.2 "Unavailable": fail gracefully, and never let a stale number be
       // presented as live. The widget renders a neutral message from this.
       // The cause goes to the server log so an outage is diagnosable.
-      logFailure(
-        'GET /api/public/status',
-        error?.message ??
-          `no location matched slug "${env.locationSlug()}" — check LOCATION_SLUG against locations.slug`,
-      )
+      //
+      // These two branches must stay separate. Collapsing them with
+      // `error?.message ?? fallback` makes an error carrying no message look
+      // identical to no error at all, which sends you hunting the wrong bug.
+      if (error) {
+        logFailure(
+          'GET /api/public/status',
+          `rpc error against ${new URL(env.supabaseUrl()).host} — ` +
+            JSON.stringify({
+              message: error.message,
+              code: error.code,
+              details: error.details,
+              hint: error.hint,
+            }),
+        )
+      } else {
+        logFailure(
+          'GET /api/public/status',
+          `rpc returned null from ${new URL(env.supabaseUrl()).host} for slug ` +
+            `"${env.locationSlug()}" — the function ran but matched no location`,
+        )
+      }
       return NextResponse.json(
         { state: 'unavailable' },
         { status: 200, headers: { ...headers, 'Cache-Control': 'no-store' } },
